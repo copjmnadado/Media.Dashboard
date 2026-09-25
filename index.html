@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRODUCTION EFFICIENCY & MEDIA REPORT DASHBOARD</title>
+  <title>MEDIA SERVICE MONITORING DASHBOARD</title>
   
   <!-- FontAwesome Icons & Chart.js -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -368,7 +368,7 @@
       <div class="title-area">
         <h1>
           <i class="fa-solid fa-microchip" style="color: var(--accent-cyan)"></i>
-          PRODUCTION EFFICIENCY & MEDIA REPORT DASHBOARD
+          MEDIA SERVICE MONITORING DASHBOARD
         </h1>
         <p>Real-Time Campus Media Equipment & Inspection Status</p>
       </div>
@@ -705,6 +705,10 @@
       updateMetrics();
       renderTrendChart();
     };
+
+    // Initial load & 60-second polling
+    fetchDashboardData();
+    setInterval(fetchDashboardData, 60000);
   </script>
 </body>
 </html>
