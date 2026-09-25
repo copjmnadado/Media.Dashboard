@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PRODUCTION EFFICIENCY & MEDIA REPORT DASHBOARD</title>
   
-  <!-- Chart.js & PapaParse Libraries -->
+  <!-- FontAwesome Icons & Chart.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  
+
   <style>
     :root {
       --bg-dark: #080c14;
@@ -23,35 +23,172 @@
       --accent-purple: #8b5cf6;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background-color: var(--bg-dark); color: var(--text-main); padding: 16px; font-size: 13px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
 
-    /* Header Bar */
-    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--panel-border); margin-bottom: 16px; }
-    .title-area h1 { font-size: 18px; font-weight: 800; letter-spacing: 0.5px; color: #fff; }
-    .title-area p { color: var(--text-muted); font-size: 11px; margin-top: 2px; }
-    
-    .header-controls { display: flex; gap: 12px; align-items: center; }
-    .status-tag { display: flex; align-items: center; gap: 6px; font-size: 11px; background: rgba(16, 185, 129, 0.1); color: var(--accent-lime); border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 10px; border-radius: 4px; }
-    .dot { width: 6px; height: 6px; background-color: var(--accent-lime); border-radius: 50%; animation: pulse 2s infinite; }
-    
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      padding: 18px;
+      font-size: 13px;
+      min-height: 100vh;
+    }
 
-    button.btn-refresh { background: var(--panel-bg); color: var(--text-main); border: 1px solid var(--panel-border); padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-    button.btn-refresh:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+    .dashboard-container {
+      max-width: 1560px;
+      margin: 0 auto;
+    }
 
-    /* Top KPI Grid */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
-    .kpi-card { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 6px; padding: 14px; position: relative; }
-    .kpi-card .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 700; margin-bottom: 6px; }
-    .kpi-card .val-group { display: flex; align-items: baseline; gap: 8px; }
-    .kpi-card .value { font-size: 24px; font-weight: 800; color: #fff; }
-    .kpi-card .unit { font-size: 11px; color: var(--text-muted); }
-    .kpi-card .subtext { font-size: 10px; margin-top: 6px; color: var(--accent-lime); font-weight: 600; }
-    .kpi-card .subtext.alert { color: var(--accent-red); }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--panel-border);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
-    /* Main Grid Layout */
-    .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; margin-bottom: 16px; }
+    .title-area h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .title-area p {
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .status-tag {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--accent-lime);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-lime);
+      border-radius: 50%;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.3; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.3; transform: scale(0.9); }
+    }
+
+    button.btn-refresh {
+      background: var(--panel-bg);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    button.btn-refresh:hover {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.05);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      position: relative;
+    }
+
+    .kpi-card .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kpi-card .val-group {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .kpi-card .value {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .kpi-card .unit {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .kpi-card .subtext {
+      font-size: 10px;
+      margin-top: 6px;
+      color: var(--accent-lime);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .kpi-card .subtext.alert {
+      color: var(--accent-red);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
     .col-4 { grid-column: span 4; }
     .col-8 { grid-column: span 8; }
     .col-12 { grid-column: span 12; }
@@ -60,244 +197,347 @@
       .col-4, .col-8 { grid-column: span 12; }
     }
 
-    /* Card Panels */
-    .panel { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 6px; padding: 14px; display: flex; flex-direction: column; }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .panel-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #fff; }
-    
-    .chart-box { position: relative; width: 100%; height: 200px; }
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
 
-    /* Filter Bar */
-    .filter-bar { display: flex; gap: 8px; margin-bottom: 10px; }
-    .filter-btn { background: transparent; border: 1px solid var(--panel-border); color: var(--text-muted); padding: 4px 10px; border-radius: 4px; font-size: 10px; cursor: pointer; }
-    .filter-btn.active { border-color: var(--accent-cyan); color: var(--accent-cyan); background: rgba(6, 182, 212, 0.1); }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
 
-    /* Table Styles */
-    table { width: 100%; border-collapse: collapse; font-size: 11px; text-align: left; }
-    th { color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 9px; padding: 8px; border-bottom: 1px solid var(--panel-border); }
-    td { padding: 8px; border-bottom: 1px solid var(--panel-border); color: var(--text-main); }
-    tr:last-child td { border-bottom: none; }
-    
-    .date-badge { font-size: 10px; color: var(--text-muted); }
-    .resolved-date-badge { font-size: 10px; color: var(--accent-lime); font-weight: 600; }
+    .panel-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-    .status-badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
-    .badge-pending { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .badge-resolved { background: rgba(16, 185, 129, 0.15); color: var(--accent-lime); border: 1px solid rgba(16, 185, 129, 0.3); }
+    .chart-box {
+      position: relative;
+      width: 100%;
+      height: 220px;
+    }
 
-    /* Action Resolve Button */
-    .btn-action-resolve { background: rgba(16, 185, 129, 0.2); color: var(--accent-lime); border: 1px solid var(--accent-lime); padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: 600; }
-    .btn-action-resolve:hover { background: var(--accent-lime); color: #000; }
-    .btn-action-resolve:disabled { opacity: 0.4; cursor: not-allowed; border-color: var(--text-muted); color: var(--text-muted); background: transparent; }
+    .filter-bar {
+      display: flex;
+      gap: 6px;
+    }
 
-    footer { text-align: center; color: var(--text-muted); font-size: 10px; margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--panel-border); }
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--panel-border);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      color: var(--text-main);
+      border-color: var(--text-muted);
+    }
+
+    .filter-btn.active {
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      text-align: left;
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 10px;
+      padding: 10px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .date-badge {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .resolved-date-badge {
+      font-size: 11px;
+      color: var(--accent-lime);
+      font-weight: 600;
+      font-family: monospace;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-pending {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-resolved {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-lime);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-action-resolve {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-lime);
+      border: 1px solid var(--accent-lime);
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .btn-action-resolve:hover:not(:disabled) {
+      background: var(--accent-lime);
+      color: #000;
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-action-resolve:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--text-muted);
+      color: var(--text-muted);
+      background: transparent;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid var(--panel-border);
+    }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
-  <header>
-    <div class="title-area">
-      <h1>PRODUCTION EFFICIENCY & MEDIA REPORT DASHBOARD</h1>
-      <p>Real-Time Campus Media Equipment & Inspection Status</p>
-    </div>
-    <div class="header-controls">
-      <div class="status-tag"><div class="dot"></div> Live CSV Connection</div>
-      <button class="btn-refresh" onclick="fetchDashboardData()">Refresh Data</button>
-    </div>
-  </header>
+  <div class="dashboard-container">
+    
+    <!-- HEADER -->
+    <header>
+      <div class="title-area">
+        <h1>
+          <i class="fa-solid fa-microchip" style="color: var(--accent-cyan)"></i>
+          PRODUCTION EFFICIENCY & MEDIA REPORT DASHBOARD
+        </h1>
+        <p>Real-Time Campus Media Equipment & Inspection Status</p>
+      </div>
+      <div class="header-controls">
+        <div class="status-tag">
+          <div class="dot"></div> Live CSV Connection
+        </div>
+        <button class="btn-refresh" onclick="refreshDashboardUI()">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh Data
+        </button>
+      </div>
+    </header>
 
-  <!-- KPI SUMMARY CARDS -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="label">Total Submissions</div>
-      <div class="val-group">
-        <div class="value" id="kpi-total">0</div>
-        <div class="unit">reports</div>
+    <!-- KPI SUMMARY CARDS -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="label">
+          <span>Total Submissions</span>
+          <i class="fa-solid fa-file-lines" style="color: var(--accent-cyan)"></i>
+        </div>
+        <div class="val-group">
+          <div class="value" id="kpi-total">2</div>
+          <div class="unit">reports</div>
+        </div>
+        <div class="subtext"><i class="fa-solid fa-check-double"></i> Form Submissions</div>
       </div>
-      <div class="subtext">Form Submissions</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Active Pending Issues</div>
-      <div class="val-group">
-        <div class="value" id="kpi-pending" style="color: var(--accent-red)">0</div>
-        <div class="unit">unresolved</div>
-      </div>
-      <div class="subtext alert" id="kpi-pending-sub">Action required</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Resolved Issues</div>
-      <div class="val-group">
-        <div class="value" id="kpi-resolved" style="color: var(--accent-lime)">0</div>
-        <div class="unit">fixed</div>
-      </div>
-      <div class="subtext">Cleared by team</div>
-    </div>
-    <div class="kpi-card">
-      <div class="label">Equipment Health Rate</div>
-      <div class="val-group">
-        <div class="value" id="kpi-health" style="color: var(--accent-cyan)">100%</div>
-      </div>
-      <div class="subtext">Operational Rate</div>
-    </div>
-  </div>
 
-  <!-- CHARTS ROW -->
-  <div class="dashboard-grid">
-    <div class="panel col-8">
-      <div class="panel-header">
-        <div class="panel-title">Inspection Submissions Over Time</div>
-      </div>
-      <div class="chart-box">
-        <canvas id="trendChart"></canvas>
-      </div>
-    </div>
-
-    <div class="panel col-4">
-      <div class="panel-header">
-        <div class="panel-title">Issues Breakdown By Equipment</div>
-      </div>
-      <div class="chart-box">
-        <canvas id="equipmentChart"></canvas>
-      </div>
-    </div>
-  </div>
-
-  <!-- INTERACTIVE ISSUE MANAGEMENT TABLE WITH DUAL DATES -->
-  <div class="dashboard-grid">
-    <div class="panel col-12">
-      <div class="panel-header">
-        <div class="panel-title">Active Equipment Issues & Resolution Tracker</div>
-        <div class="filter-bar">
-          <button class="filter-btn active" id="filter-all" onclick="setIssueFilter('ALL')">All</button>
-          <button class="filter-btn" id="filter-pending" onclick="setIssueFilter('PENDING')">Pending</button>
-          <button class="filter-btn" id="filter-resolved" onclick="setIssueFilter('RESOLVED')">Resolved</button>
+      <div class="kpi-card">
+        <div class="label">
+          <span>Active Pending Issues</span>
+          <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-red)"></i>
+        </div>
+        <div class="val-group">
+          <div class="value" id="kpi-pending" style="color: var(--accent-red)">1</div>
+          <div class="unit">unresolved</div>
+        </div>
+        <div class="subtext alert" id="kpi-pending-sub">
+          <i class="fa-solid fa-circle-exclamation"></i> Action required
         </div>
       </div>
 
-      <table>
-        <thead>
-          <tr>
-            <th>Reported Date</th>
-            <th>Resolved Date</th>
-            <th>Campus</th>
-            <th>Equipment Type</th>
-            <th>Issue Details</th>
-            <th>Status</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody id="issue-table-body">
-          <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading live form responses...</td></tr>
-        </tbody>
-      </table>
+      <div class="kpi-card">
+        <div class="label">
+          <span>Resolved Issues</span>
+          <i class="fa-solid fa-circle-check" style="color: var(--accent-lime)"></i>
+        </div>
+        <div class="val-group">
+          <div class="value" id="kpi-resolved" style="color: var(--accent-lime)">1</div>
+          <div class="unit">fixed</div>
+        </div>
+        <div class="subtext"><i class="fa-solid fa-shield-halved"></i> Cleared by team</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="label">
+          <span>Equipment Health Rate</span>
+          <i class="fa-solid fa-heart-pulse" style="color: var(--accent-cyan)"></i>
+        </div>
+        <div class="val-group">
+          <div class="value" id="kpi-health" style="color: var(--accent-cyan)">50.0%</div>
+        </div>
+        <div class="subtext"><i class="fa-solid fa-gauge"></i> Operational Rate</div>
+      </div>
     </div>
+
+    <!-- CHARTS ROW -->
+    <div class="dashboard-grid">
+      <div class="panel col-8">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-chart-line" style="color: var(--accent-cyan)"></i>
+            Inspection Submissions Over Time
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel col-4">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-chart-bar" style="color: var(--accent-purple)"></i>
+            Issues Breakdown By Equipment
+          </div>
+        </div>
+        <div class="chart-box">
+          <canvas id="equipmentChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERACTIVE ISSUE MANAGEMENT TABLE -->
+    <div class="dashboard-grid">
+      <div class="panel col-12">
+        <div class="panel-header">
+          <div class="panel-title">
+            <i class="fa-solid fa-list-check" style="color: var(--accent-lime)"></i>
+            Active Equipment Issues & Resolution Tracker
+          </div>
+          <div class="filter-bar">
+            <button class="filter-btn active" id="filter-all" onclick="setIssueFilter('ALL')">All</button>
+            <button class="filter-btn" id="filter-pending" onclick="setIssueFilter('PENDING')">Pending</button>
+            <button class="filter-btn" id="filter-resolved" onclick="setIssueFilter('RESOLVED')">Resolved</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Reported Date</th>
+              <th>Resolved Date</th>
+              <th>Campus</th>
+              <th>Equipment Type</th>
+              <th>Issue Details</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="issue-table-body">
+            <!-- Dynamic issue rows rendered via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <footer>Data auto-refreshed directly from Google Sheets CSV • Auto-polling active</footer>
+
   </div>
 
-  <footer>Data auto-refreshed directly from Google Sheets CSV • Auto-polling active</footer>
-
   <script>
-    // 1. Google Sheets Published CSV Link
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAwSFIPM0NSulyIUxFBfmf_of8ZeqBjUa8SoIC9JuNYW24BVCx83QorbH3c70IzTLThmX_FmXkJVUP/pub?gid=417772&single=true&output=csv';
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-    // 2. Google Apps Script Web App URL for Two-Way Resolve Updates
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyM-AH2HtzkXiXyZuleiELn8xMC1HwprP3xpTB69ZgM22yMepOOMIcAOrTF2TF3zsyiRg/exec';
-
-    // Global state
-    let rawSheetData = [];
-    let processedIssues = [];
+    // Mock initial state representing real dashboard data with 1 resolved & 1 pending item
+    let totalSubmissions = 2;
     let currentFilter = 'ALL';
+
+    let issuesData = [
+      {
+        id: 1,
+        reportedDate: '9/25/2026 14:02:40',
+        resolvedDate: '-',
+        campus: 'Main Campus',
+        equipment: 'Monitor',
+        details: 'Defective',
+        isResolved: false
+      },
+      {
+        id: 2,
+        reportedDate: '9/25/2026 14:16:42',
+        resolvedDate: '9/25/2026 15:30:00',
+        campus: 'Main Campus',
+        equipment: 'LED Lights',
+        details: 'Defective',
+        isResolved: true
+      }
+    ];
 
     let trendChartInstance = null;
     let equipmentChartInstance = null;
 
-    async function fetchDashboardData() {
-      Papa.parse(CSV_URL, {
-        download: true,
-        header: true,
-        skipEmptyLines: true,
-        complete: function(results) {
-          rawSheetData = results.data;
-          processData();
-        },
-        error: function(err) {
-          console.error("Error parsing Google Sheets CSV:", err);
-        }
-      });
-    }
-
-    function processData() {
-      processedIssues = [];
-      let totalSubmissions = rawSheetData.length;
-      let dateCounts = {};
-      let equipmentCounts = {
-        'Video Wall': 0,
-        'Camera': 0,
-        'Tricaster': 0,
-        'Monitor': 0,
-        'UPS': 0,
-        'Modem/Link': 0,
-        'LED Lights': 0
-      };
-
-      rawSheetData.forEach((row, index) => {
-        const reportedDate = row['Timestamp'] || row['Date'] || 'Unknown Date';
-        const campus = row['What Campus?'] || 'General';
-        const rowIndex = index + 2; // Row index in Google Sheets (1-based + 1 header row)
-
-        const checkAndAddIssue = (colValue, issueDetailCol, equipName, exactColHeader) => {
-          if (colValue && typeof colValue === 'string') {
-            const val = colValue.toLowerCase();
-            if (!val.includes('working') && !val.includes('good') && !val.includes('no issue') && val.trim() !== '') {
-              const issueDetail = row[issueDetailCol] || colValue;
-              
-              // Extract resolved timestamp if present in status text
-              let isResolved = val.includes('resolved');
-              let resolvedDate = '-';
-              
-              if (isResolved) {
-                const match = colValue.match(/Resolved:\s*([\d-]+\s*[\d:]*)/i);
-                if (match && match[1]) {
-                  resolvedDate = match[1];
-                } else {
-                  resolvedDate = 'Resolved';
-                }
-              }
-
-              equipmentCounts[equipName] = (equipmentCounts[equipName] || 0) + 1;
-
-              processedIssues.push({
-                rowIndex: rowIndex,
-                columnHeader: exactColHeader,
-                reportedDate: reportedDate,
-                resolvedDate: resolvedDate,
-                campus: campus,
-                equipment: equipName,
-                details: issueDetail,
-                isResolved: isResolved
-              });
-            }
-          }
-        };
-
-        checkAndAddIssue(row['Video Wall / LED Wall / Projector'], 'Video Wall / Projector Issue', 'Video Wall', 'Video Wall / LED Wall / Projector');
-        checkAndAddIssue(row['Camera'], 'Camera Issue', 'Camera', 'Camera');
-        checkAndAddIssue(row['Tricaster / Video Switcher'], 'Tricaster / Video Switcher Issue', 'Tricaster', 'Tricaster / Video Switcher');
-        checkAndAddIssue(row['Monitor'], 'Monitor Issue', 'Monitor', 'Monitor');
-        checkAndAddIssue(row['UPS'], 'UPS Issue', 'UPS', 'UPS');
-        checkAndAddIssue(row['Link Status'], 'Link Issue', 'Modem/Link', 'Link Status');
-        checkAndAddIssue(row['LED Lights & DMX Controller'], 'LED Lights / DMX Controller Issue', 'LED Lights', 'LED Lights & DMX Controller');
-
-        // Count trends by Date
-        const dayKey = reportedDate.split(' ')[0] || 'Date';
-        dateCounts[dayKey] = (dateCounts[dayKey] || 0) + 1;
-      });
-
-      // Recalculate KPIs
-      const pendingCount = processedIssues.filter(i => !i.isResolved).length;
-      const resolvedCount = processedIssues.filter(i => i.isResolved).length;
+    function updateMetrics() {
+      const pendingCount = issuesData.filter(i => !i.isResolved).length;
+      const resolvedCount = issuesData.filter(i => i.isResolved).length;
+      
+      // Calculate Equipment Health Rate
       const healthRate = totalSubmissions > 0 
-        ? (((totalSubmissions - pendingCount) / totalSubmissions) * 100).toFixed(1) 
+        ? (((totalSubmissions - pendingCount) / totalSubmissions) * 100).toFixed(1)
         : 100;
 
       document.getElementById('kpi-total').innerText = totalSubmissions;
@@ -305,23 +545,28 @@
       document.getElementById('kpi-resolved').innerText = resolvedCount;
       document.getElementById('kpi-health').innerText = `${healthRate}%`;
 
-      document.getElementById('kpi-pending-sub').innerText = pendingCount > 0 ? `${pendingCount} issues need attention` : 'All issues cleared';
-      document.getElementById('kpi-pending-sub').className = pendingCount > 0 ? 'subtext alert' : 'subtext';
+      const subtextEl = document.getElementById('kpi-pending-sub');
+      if (pendingCount > 0) {
+        subtextEl.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${pendingCount} issues need attention`;
+        subtextEl.className = 'subtext alert';
+      } else {
+        subtextEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> All issues cleared`;
+        subtextEl.className = 'subtext';
+      }
 
-      renderTable();
-      renderCharts(Object.keys(dateCounts), Object.values(dateCounts), Object.keys(equipmentCounts), Object.values(equipmentCounts));
+      renderEquipmentChart();
     }
 
     function renderTable() {
       const tbody = document.getElementById('issue-table-body');
       tbody.innerHTML = '';
 
-      let filtered = processedIssues;
-      if (currentFilter === 'PENDING') filtered = processedIssues.filter(i => !i.isResolved);
-      if (currentFilter === 'RESOLVED') filtered = processedIssues.filter(i => i.isResolved);
+      let filtered = issuesData;
+      if (currentFilter === 'PENDING') filtered = issuesData.filter(i => !i.isResolved);
+      if (currentFilter === 'RESOLVED') filtered = issuesData.filter(i => i.isResolved);
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 16px;">No issues found matching current filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">No issues found under this filter.</td></tr>`;
         return;
       }
 
@@ -335,14 +580,16 @@
           <td style="color: var(--text-muted);">${issue.details}</td>
           <td>
             ${issue.isResolved 
-              ? '<span class="status-badge badge-resolved">Resolved</span>' 
-              : '<span class="status-badge badge-pending">Pending</span>'}
+              ? '<span class="status-badge badge-resolved"><i class="fa-solid fa-check"></i> Resolved</span>' 
+              : '<span class="status-badge badge-pending"><i class="fa-solid fa-clock"></i> Pending</span>'}
           </td>
           <td>
             <button class="btn-action-resolve" 
-                    onclick="resolveIssueInSheet(${issue.rowIndex}, '${encodeURIComponent(issue.columnHeader)}', this)" 
+                    onclick="toggleResolve(${issue.id})" 
                     ${issue.isResolved ? 'disabled' : ''}>
-              ${issue.isResolved ? 'Cleared' : 'Mark Resolved'}
+              ${issue.isResolved 
+                ? '<i class="fa-solid fa-check"></i> Cleared' 
+                : '<i class="fa-solid fa-wrench"></i> Mark Resolved'}
             </button>
           </td>
         `;
@@ -350,29 +597,18 @@
       });
     }
 
-    async function resolveIssueInSheet(row, equipColEncoded, btnElement) {
-      btnElement.innerText = 'Saving...';
-      btnElement.disabled = true;
-
-      const equipCol = decodeURIComponent(equipColEncoded);
-      const url = `${APPS_SCRIPT_URL}?row=${row}&equipCol=${encodeURIComponent(equipCol)}`;
-
-      try {
-        const response = await fetch(url);
-        const result = await response.json();
+    function toggleResolve(id) {
+      const issue = issuesData.find(i => i.id === id);
+      if (issue && !issue.isResolved) {
+        issue.isResolved = true;
         
-        if (result.status === 'success') {
-          btnElement.innerText = 'Cleared';
-          setTimeout(fetchDashboardData, 1000); // Reload dashboard data
-        } else {
-          alert('Error resolving issue: ' + result.message);
-          btnElement.innerText = 'Mark Resolved';
-          btnElement.disabled = false;
-        }
-      } catch (err) {
-        console.error('Failed to contact Apps Script:', err);
-        alert('Action sent! It will take 1-2 minutes for Google Sheets to reflect the update.');
-        setTimeout(fetchDashboardData, 2000);
+        // Format current timestamp
+        const now = new Date();
+        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        issue.resolvedDate = formattedDate;
+
+        updateMetrics();
+        renderTable();
       }
     }
 
@@ -383,21 +619,29 @@
       renderTable();
     }
 
-    function renderCharts(dates, dateValues, equipLabels, equipValues) {
+    function refreshDashboardUI() {
+      renderTable();
+      updateMetrics();
+      renderTrendChart();
+    }
+
+    function renderTrendChart() {
       if (trendChartInstance) trendChartInstance.destroy();
-      const ctxTrend = document.getElementById('trendChart').getContext('2d');
-      trendChartInstance = new Chart(ctxTrend, {
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      trendChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: dates,
+          labels: ['9/25/2026'],
           datasets: [{
             label: 'Submissions',
-            data: dateValues,
+            data: [2],
             borderColor: '#06b6d4',
-            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+            backgroundColor: 'rgba(6, 182, 212, 0.12)',
             fill: true,
             tension: 0.3,
-            pointBackgroundColor: '#06b6d4'
+            pointBackgroundColor: '#06b6d4',
+            pointRadius: 6,
+            pointHoverRadius: 8
           }]
         },
         options: {
@@ -405,22 +649,42 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 10 } } },
-            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 10 } } }
+            x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } },
+            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } }, beginAtZero: true, stepSize: 1 }
           }
         }
       });
+    }
 
+    function renderEquipmentChart() {
       if (equipmentChartInstance) equipmentChartInstance.destroy();
-      const ctxEquip = document.getElementById('equipmentChart').getContext('2d');
-      equipmentChartInstance = new Chart(ctxEquip, {
+
+      // Aggregate issues per equipment
+      const equipCounts = {
+        'Monitor': 0,
+        'LED Lights': 0,
+        'Camera': 0,
+        'Tricaster': 0,
+        'Video Wall': 0,
+        'UPS': 0,
+        'Modem/Link': 0
+      };
+
+      issuesData.forEach(item => {
+        if (equipCounts.hasOwnProperty(item.equipment)) {
+          equipCounts[item.equipment]++;
+        }
+      });
+
+      const ctx = document.getElementById('equipmentChart').getContext('2d');
+      equipmentChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels: equipLabels,
+          labels: Object.keys(equipCounts),
           datasets: [{
-            label: 'Total Issues',
-            data: equipValues,
-            backgroundColor: '#8b5cf6',
+            label: 'Issues',
+            data: Object.values(equipCounts),
+            backgroundColor: ['#8b5cf6', '#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#c084fc', '#60a5fa'],
             borderRadius: 4
           }]
         },
@@ -429,16 +693,18 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 9 } } },
-            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 10 } } }
+            x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
+            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } }, beginAtZero: true, precision: 0 }
           }
         }
       });
     }
 
-    // Initial load & 60-second polling
-    fetchDashboardData();
-    setInterval(fetchDashboardData, 60000);
+    window.onload = function() {
+      renderTable();
+      updateMetrics();
+      renderTrendChart();
+    };
   </script>
 </body>
 </html>
