@@ -3,120 +3,654 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Media Performance & Equipment Dashboard</title>
-  <!-- Chart.js & PapaParse CDN -->
+  <title>Media Equipment & Inspection Analytics</title>
+  
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Chart.js & PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
   <style>
     :root {
-      --bg-color: #0f0c20;
-      --card-bg: #18152e;
-      --card-border: #292447;
-      --text-main: #f0f0f5;
-      --text-muted: #8e8aab;
-      --accent-pink: #e024b3;
-      --accent-purple: #9d4edd;
-      --accent-green: #00e6a8;
-      --accent-red: #ff4d6d;
+      --bg-dark: #080c14;
+      --panel-bg: #0f172a;
+      --panel-border: #1e293b;
+      --panel-hover: #172338;
+      
+      --text-main: #f8fafc;
+      --text-muted: #64748b;
+      --text-sub: #94a3b8;
+
+      --accent-cyan: #38bdf8;
+      --accent-lime: #4ade80;
+      --accent-orange: #fb923c;
+      --accent-red: #f87171;
+      --accent-yellow: #facc15;
+      --accent-purple: #c084fc;
+      --accent-blue: #60a5fa;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
 
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(90deg, #fff, var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    header p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      padding: 18px;
+      min-height: 100vh;
+      font-size: 13px;
+    }
 
-    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; position: relative; }
-    .kpi-title { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-    .kpi-value { font-size: 28px; font-weight: 700; }
-    .kpi-badge { position: absolute; top: 18px; right: 18px; font-size: 11px; padding: 4px 8px; border-radius: 20px; font-weight: 600; }
-    .badge-green { background: rgba(0, 230, 168, 0.15); color: var(--accent-green); }
-    .badge-red { background: rgba(255, 77, 109, 0.15); color: var(--accent-red); }
+    .dashboard-container {
+      max-width: 1560px;
+      margin: 0 auto;
+    }
 
-    .grid-charts { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-    @media (max-width: 900px) { .grid-charts { grid-template-columns: 1fr; } }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      padding: 12px 20px;
+      border-radius: 10px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
 
-    .chart-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; }
-    .chart-card h3 { font-size: 16px; margin-bottom: 16px; color: var(--text-main); }
-    .chart-container { position: relative; height: 300px; width: 100%; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-title h1 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-select, .control-input {
+      background: var(--bg-dark);
+      border: 1px solid var(--panel-border);
+      color: var(--text-main);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .control-select:focus, .control-input:focus {
+      border-color: var(--accent-cyan);
+    }
+
+    .live-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--accent-lime);
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--accent-lime);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.4; transform: scale(0.9); }
+    }
+
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      position: relative;
+    }
+
+    .kpi-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .kpi-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-icon {
+      font-size: 16px;
+      color: var(--accent-cyan);
+    }
+
+    .kpi-value-group {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .kpi-unit {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .kpi-change {
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .change-up { color: var(--accent-lime); }
+    .change-down { color: var(--accent-red); }
+
+    .grid-3-col {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1200px) {
+      .grid-3-col { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-box {
+      position: relative;
+      height: 200px;
+      width: 100%;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .data-table th {
+      text-align: left;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 10px;
+      text-transform: uppercase;
+      padding: 8px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .data-table td {
+      padding: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      color: var(--text-sub);
+    }
+
+    .tag {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .tag-good { background: rgba(74, 222, 128, 0.15); color: var(--accent-lime); }
+    .tag-warning { background: rgba(250, 204, 21, 0.15); color: var(--accent-yellow); }
+    .tag-critical { background: rgba(248, 113, 113, 0.15); color: var(--accent-red); }
+
+    .bottleneck-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .bottleneck-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-dark);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent-orange);
+    }
+
+    .bottleneck-rank {
+      width: 20px;
+      height: 20px;
+      background: var(--accent-orange);
+      color: #000;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 11px;
+    }
+
+    .bottleneck-info {
+      flex: 1;
+      margin-left: 10px;
+    }
+
+    .bottleneck-title {
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .bottleneck-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .alerts-feed {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .alert-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: var(--bg-dark);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--panel-border);
+    }
+
+    .alert-icon {
+      color: var(--accent-red);
+      font-size: 14px;
+      margin-top: 2px;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-text {
+      color: var(--text-main);
+      font-size: 11px;
+    }
+
+    .alert-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .gauge-wrapper {
+      position: relative;
+      height: 160px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .gauge-center-text {
+      position: absolute;
+      top: 65%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .gauge-center-text .val {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--accent-lime);
+    }
+
+    .gauge-center-text .lbl {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+    footer {
+      display: flex;
+      justify-content: space-between;
+      color: var(--text-muted);
+      font-size: 10px;
+      margin-top: 8px;
+      padding: 0 4px;
+    }
   </style>
 </head>
 <body>
 
-  <header>
-    <div>
-      <h1>Media Report Analytics</h1>
-      <p>Live Campus AV & Equipment Inspection Dashboard</p>
-    </div>
-  </header>
+  <div class="dashboard-container">
+    
+    <!-- Top Bar -->
+    <header>
+      <div class="brand">
+        <div class="brand-title">
+          <h1><i class="fa-solid fa-microchip" style="color: var(--accent-cyan)"></i> MEDIA EQUIPMENT ANALYTICS</h1>
+          <p>Real-time overview of campus AV equipment performance & operational health</p>
+        </div>
+      </div>
 
-  <!-- KPI Section -->
-  <div class="grid-kpi">
-    <div class="kpi-card">
-      <div class="kpi-title">Total Inspection Reports</div>
-      <div class="kpi-value" id="kpi-total">0</div>
-      <span class="kpi-badge badge-green">Live Data</span>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Active Equipment Issues</div>
-      <div class="kpi-value" id="kpi-issues" style="color: var(--accent-red)">0</div>
-      <span class="kpi-badge badge-red" id="kpi-issue-rate">0% Rate</span>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Reporting Campuses</div>
-      <div class="kpi-value" id="kpi-campuses">0</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-title">Equipment Operational Rate</div>
-      <div class="kpi-value" id="kpi-health" style="color: var(--accent-green)">100%</div>
-    </div>
-  </div>
+      <div class="header-controls">
+        <input type="text" id="searchInput" class="control-input" placeholder="Search campus or issue...">
+        <select id="campusFilter" class="control-select">
+          <option value="ALL">All Campuses</option>
+        </select>
+        <div class="live-badge">
+          <div class="pulse-dot"></div> Auto Refresh: 60s
+        </div>
+      </div>
+    </header>
 
-  <!-- Charts Section -->
-  <div class="grid-charts">
-    <div class="chart-card">
-      <h3>Reports & Issues Trend</h3>
-      <div class="chart-container">
-        <canvas id="trendChart"></canvas>
+    <!-- Top KPI Row -->
+    <div class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-title">TOTAL INSPECTIONS</span>
+          <i class="fa-solid fa-clipboard-check kpi-icon"></i>
+        </div>
+        <div class="kpi-value-group">
+          <span class="kpi-value" id="kpiTotal">0</span>
+          <span class="kpi-unit">reports</span>
+        </div>
+        <div class="kpi-change change-up"><i class="fa-solid fa-arrow-up"></i> 100% synced</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-title">EQUIPMENT HEALTH</span>
+          <i class="fa-solid fa-heart-pulse kpi-icon" style="color: var(--accent-lime)"></i>
+        </div>
+        <div class="kpi-value-group">
+          <span class="kpi-value" id="kpiHealth" style="color: var(--accent-lime)">100%</span>
+        </div>
+        <div class="kpi-change change-up"><i class="fa-solid fa-check"></i> Operational rate</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-title">ACTIVE ISSUES</span>
+          <i class="fa-solid fa-triangle-exclamation kpi-icon" style="color: var(--accent-red)"></i>
+        </div>
+        <div class="kpi-value-group">
+          <span class="kpi-value" id="kpiIssues" style="color: var(--accent-red)">0</span>
+          <span class="kpi-unit">faults</span>
+        </div>
+        <div class="kpi-change change-down" id="kpiIssueRate"><i class="fa-solid fa-bug"></i> 0% issue rate</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-title">REPORTING CAMPUSES</span>
+          <i class="fa-solid fa-city kpi-icon" style="color: var(--accent-purple)"></i>
+        </div>
+        <div class="kpi-value-group">
+          <span class="kpi-value" id="kpiCampuses">0</span>
+          <span class="kpi-unit">sites</span>
+        </div>
+        <div class="kpi-change change-up"><i class="fa-solid fa-circle-nodes"></i> Active network</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-title">MOST AFFECTED</span>
+          <i class="fa-solid fa-wrench kpi-icon" style="color: var(--accent-orange)"></i>
+        </div>
+        <div class="kpi-value-group">
+          <span class="kpi-value" id="kpiTopFault" style="font-size: 18px; color: var(--accent-orange);">None</span>
+        </div>
+        <div class="kpi-change" style="color: var(--text-muted)">Top issue category</div>
       </div>
     </div>
-    <div class="chart-card">
-      <h3>Issues by Equipment Type</h3>
-      <div class="chart-container">
-        <canvas id="equipmentChart"></canvas>
+
+    <!-- Main Charts Grid Row 1 -->
+    <div class="grid-3-col">
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-chart-line" style="color: var(--accent-cyan)"></i> INSPECTIONS OVER TIME</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-chart-bar" style="color: var(--accent-lime)"></i> REPORTS BY CAMPUS</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="campusChart"></canvas>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-chart-pie" style="color: var(--accent-yellow)"></i> FAULT DISTRIBUTION</span>
+        </div>
+        <div class="chart-box">
+          <canvas id="faultChart"></canvas>
+        </div>
       </div>
     </div>
+
+    <!-- Main Grid Row 2: Equipment Status Table, Bottlenecks, Gauge, and Feed -->
+    <div class="grid-3-col">
+      <!-- Equipment Type Status Table -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-server" style="color: var(--accent-purple)"></i> EQUIPMENT TYPE BREAKDOWN</span>
+        </div>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Equipment Category</th>
+              <th>Total Logs</th>
+              <th>Faults</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="equipTableBody">
+            <!-- Dynamic content -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Top Bottlenecks & Operational Gauge -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-gauge-high" style="color: var(--accent-lime)"></i> OPERATIONAL GAUGE</span>
+        </div>
+        <div class="gauge-wrapper">
+          <canvas id="gaugeChart"></canvas>
+          <div class="gauge-center-text">
+            <div class="val" id="gaugeVal">100%</div>
+            <div class="lbl">HEALTH INDEX</div>
+          </div>
+        </div>
+        <div class="panel-header" style="margin-top: 10px;">
+          <span class="panel-title" style="font-size: 11px;"><i class="fa-solid fa-fire" style="color: var(--accent-orange)"></i> TOP FAULT BOTTLENECKS</span>
+        </div>
+        <div class="bottleneck-list" id="bottleneckList">
+          <!-- Dynamic items -->
+        </div>
+      </div>
+
+      <!-- Live Alerts Feed -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title"><i class="fa-solid fa-bell" style="color: var(--accent-red)"></i> RECENT FAULT ALERTS</span>
+        </div>
+        <div class="alerts-feed" id="alertsFeed">
+          <!-- Dynamic alerts -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer info -->
+    <footer>
+      <span>System Status: <strong style="color: var(--accent-lime)">Online & Synced</strong></span>
+      <span>Google Sheet GID: 417772 | Data refreshes every 60 seconds</span>
+    </footer>
+
   </div>
 
   <script>
-    // 1. PASTE YOUR PUBLISHED GOOGLE SHEET CSV URL HERE
     const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAwSFIPM0NSulyIUxFBfmf_of8ZeqBjUa8SoIC9JuNYW24BVCx83QorbH3c70IzTLThmX_FmXkJVUP/pub?gid=417772&single=true&output=csv';
 
-    async function loadDashboard() {
-      if (GOOGLE_SHEET_CSV_URL === 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAwSFIPM0NSulyIUxFBfmf_of8ZeqBjUa8SoIC9JuNYW24BVCx83QorbH3c70IzTLThmX_FmXkJVUP/pub?gid=417772&single=true&output=csv') {
-        console.warn('Please insert your published Google Sheet CSV URL.');
-        return;
-      }
+    let rawData = [];
+    let trendChart, campusChart, faultChart, gaugeChart;
 
+    // Set dark theme defaults for Chart.js
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.font.family = 'Inter';
+
+    function fetchData() {
       Papa.parse(GOOGLE_SHEET_CSV_URL, {
         download: true,
         header: true,
+        skipEmptyLines: true,
         complete: function(results) {
-          processData(results.data);
+          rawData = results.data.filter(row => row['Timestamp'] || Object.keys(row).some(k => row[k]));
+          populateDropdowns(rawData);
+          processAndRender();
+        },
+        error: function(err) {
+          console.error("Data fetch error:", err);
         }
       });
     }
 
-    function processData(data) {
-      // Filter out empty rows
-      const rows = data.filter(r => r['Timestamp'] || r['What Campus?']);
-      
-      const totalReports = rows.length;
-      let issueCount = 0;
+    function findKey(data, terms) {
+      if (!data || !data[0]) return null;
+      const headers = Object.keys(data[0]);
+      return headers.find(h => terms.some(t => h.toLowerCase().includes(t.toLowerCase())));
+    }
+
+    function populateDropdowns(data) {
+      const select = document.getElementById('campusFilter');
+      const curVal = select.value;
+      const campusKey = findKey(data, ['campus']) || 'What Campus?';
+
       const campuses = new Set();
-      const equipmentIssues = {
+      data.forEach(r => { if (r[campusKey]) campuses.add(r[campusKey].trim()); });
+
+      select.innerHTML = '<option value="ALL">All Campuses</option>';
+      campuses.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        select.appendChild(opt);
+      });
+      select.value = curVal;
+    }
+
+    function processAndRender() {
+      const campusFilter = document.getElementById('campusFilter').value;
+      const searchVal = document.getElementById('searchInput').value.toLowerCase();
+
+      const campusKey = findKey(rawData, ['campus']) || 'What Campus?';
+      const timeKey = findKey(rawData, ['timestamp']) || 'Timestamp';
+
+      const equipKeys = {
+        'Video Wall': findKey(rawData, ['video wall', 'projector']),
+        'Camera': findKey(rawData, ['camera']),
+        'Tricaster': findKey(rawData, ['tricaster', 'switcher']),
+        'Monitor': findKey(rawData, ['monitor']),
+        'UPS': findKey(rawData, ['ups']),
+        'Link/Modem': findKey(rawData, ['link', 'modem']),
+        'LED Lights': findKey(rawData, ['led lights', 'dmx'])
+      };
+
+      const filtered = rawData.filter(row => {
+        const matchCampus = (campusFilter === 'ALL') || (row[campusKey] && row[campusKey].trim() === campusFilter);
+        const matchSearch = !searchVal || Object.values(row).some(v => String(v).toLowerCase().includes(searchVal));
+        return matchCampus && matchSearch;
+      });
+
+      const totalReports = filtered.length;
+      let totalIssues = 0;
+      const campusCounts = {};
+      const equipFaults = {
         'Video Wall': 0,
         'Camera': 0,
         'Tricaster': 0,
@@ -125,63 +659,73 @@
         'Link/Modem': 0,
         'LED Lights': 0
       };
+      const timeTrend = {};
+      const alerts = [];
 
-      const dateMap = {};
+      filtered.forEach(row => {
+        const campus = row[campusKey] ? row[campusKey].trim() : 'Unknown';
+        campusCounts[campus] = (campusCounts[campus] || 0) + 1;
 
-      rows.forEach(row => {
-        if (row['What Campus?']) campuses.add(row['What Campus?']);
-
-        // Check equipment issue flags
-        let rowHasIssue = false;
-        
-        const checkIssue = (val, key) => {
-          if (val && !val.toLowerCase().includes('working') && !val.toLowerCase().includes('good') && !val.toLowerCase().includes('no issue') && val.trim() !== '') {
-            equipmentIssues[key]++;
-            rowHasIssue = true;
+        let rowFaults = 0;
+        Object.keys(equipKeys).forEach(eq => {
+          const col = equipKeys[eq];
+          if (col && row[col]) {
+            const val = row[col].toString().toLowerCase();
+            if (!val.includes('working') && !val.includes('good') && !val.includes('ok') && !val.includes('no issue') && val.trim() !== '') {
+              equipFaults[eq]++;
+              rowFaults++;
+              alerts.push({
+                time: row[timeKey] || 'Recent',
+                campus: campus,
+                text: `${eq}: ${row[col]}`
+              });
+            }
           }
-        };
+        });
 
-        checkIssue(row['Video Wall / LED Wall / Projector'], 'Video Wall');
-        checkIssue(row['Camera'], 'Camera');
-        checkIssue(row['Tricaster / Video Switcher'], 'Tricaster');
-        checkIssue(row['Monitor'], 'Monitor');
-        checkIssue(row['UPS'], 'UPS');
-        checkIssue(row['Link Status'], 'Link/Modem');
-        checkIssue(row['LED Lights & DMX Controller'], 'LED Lights');
+        if (rowFaults > 0) totalIssues++;
 
-        if (rowHasIssue) issueCount++;
-
-        // Group by Date for Trend
-        const rawDate = row['Date'] || row['Timestamp'] ? row['Timestamp'].split(' ')[0] : 'Unknown';
-        if (!dateMap[rawDate]) dateMap[rawDate] = { reports: 0 };
-        dateMap[rawDate].reports++;
+        const dateStr = (row[timeKey] || '').split(' ')[0] || 'N/A';
+        timeTrend[dateStr] = (timeTrend[dateStr] || 0) + 1;
       });
 
-      // Update KPIs
-      document.getElementById('kpi-total').innerText = totalReports;
-      document.getElementById('kpi-issues').innerText = issueCount;
-      document.getElementById('kpi-campuses').innerText = campuses.size;
-      
-      const healthRate = totalReports > 0 ? (((totalReports - issueCount) / totalReports) * 100).toFixed(1) : 100;
-      document.getElementById('kpi-health').innerText = `${healthRate}%`;
-      document.getElementById('kpi-issue-rate').innerText = `${(100 - healthRate).toFixed(0)}% Issues`;
+      // Update KPI Cards
+      document.getElementById('kpiTotal').innerText = totalReports;
+      document.getElementById('kpiIssues').innerText = totalIssues;
+      document.getElementById('kpiCampuses').innerText = Object.keys(campusCounts).length;
 
-      renderTrendChart(Object.keys(dateMap), Object.values(dateMap).map(d => d.reports));
-      renderDoughnutChart(Object.keys(equipmentIssues), Object.values(equipmentIssues));
+      const health = totalReports > 0 ? (((totalReports - totalIssues) / totalReports) * 100).toFixed(1) : 100;
+      document.getElementById('kpiHealth').innerText = `${health}%`;
+      document.getElementById('gaugeVal').innerText = `${health}%`;
+      document.getElementById('kpiIssueRate').innerHTML = `<i class="fa-solid fa-bug"></i> ${(100 - health).toFixed(1)}% issue rate`;
+
+      // Find top fault
+      const sortedFaults = Object.entries(equipFaults).sort((a, b) => b[1] - a[1]);
+      const topFault = sortedFaults[0][1] > 0 ? sortedFaults[0][0] : 'None';
+      document.getElementById('kpiTopFault').innerText = topFault;
+
+      // Render All Dashboard Components
+      renderCharts(timeTrend, campusCounts, equipFaults, health);
+      renderTable(equipFaults, totalReports);
+      renderBottlenecks(sortedFaults);
+      renderAlerts(alerts);
     }
 
-    function renderTrendChart(labels, values) {
-      new Chart(document.getElementById('trendChart'), {
+    function renderCharts(timeTrend, campusCounts, equipFaults, health) {
+      // 1. Line Trend Chart
+      if (trendChart) trendChart.destroy();
+      trendChart = new Chart(document.getElementById('trendChart'), {
         type: 'line',
         data: {
-          labels: labels,
+          labels: Object.keys(timeTrend),
           datasets: [{
-            label: 'Inspection Submissions',
-            data: values,
-            borderColor: '#e024b3',
-            backgroundColor: 'rgba(224, 36, 179, 0.15)',
+            label: 'Reports',
+            data: Object.values(timeTrend),
+            borderColor: '#38bdf8',
+            backgroundColor: 'rgba(56, 189, 248, 0.1)',
             fill: true,
-            tension: 0.4
+            tension: 0.4,
+            borderWidth: 2
           }]
         },
         options: {
@@ -189,32 +733,150 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: '#292447' }, ticks: { color: '#8e8aab' } },
-            y: { grid: { color: '#292447' }, ticks: { color: '#8e8aab' } }
+            x: { grid: { color: '#1e293b' } },
+            y: { grid: { color: '#1e293b' }, beginAtZero: true }
           }
         }
       });
-    }
 
-    function renderDoughnutChart(labels, values) {
-      new Chart(document.getElementById('equipmentChart'), {
+      // 2. Campus Horizontal Bar Chart
+      if (campusChart) campusChart.destroy();
+      campusChart = new Chart(document.getElementById('campusChart'), {
+        type: 'bar',
+        data: {
+          labels: Object.keys(campusCounts),
+          datasets: [{
+            data: Object.values(campusCounts),
+            backgroundColor: '#4ade80',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#1e293b' } },
+            y: { grid: { color: '#1e293b' } }
+          }
+        }
+      });
+
+      // 3. Fault Distribution Doughnut
+      if (faultChart) faultChart.destroy();
+      faultChart = new Chart(document.getElementById('faultChart'), {
         type: 'doughnut',
         data: {
-          labels: labels,
+          labels: Object.keys(equipFaults),
           datasets: [{
-            data: values,
-            backgroundColor: ['#e024b3', '#9d4edd', '#00e6a8', '#ff4d6d', '#3a86ff', '#ffbe0b', '#fb5607']
+            data: Object.values(equipFaults),
+            backgroundColor: ['#38bdf8', '#4ade80', '#fb923c', '#f87171', '#facc15', '#c084fc', '#60a5fa'],
+            borderWidth: 2,
+            borderColor: '#0f172a'
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom', labels: { color: '#8e8aab' } } }
+          plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } }
+        }
+      });
+
+      // 4. Half Gauge Chart
+      if (gaugeChart) gaugeChart.destroy();
+      gaugeChart = new Chart(document.getElementById('gaugeChart'), {
+        type: 'doughnut',
+        data: {
+          labels: ['Health', 'Issues'],
+          datasets: [{
+            data: [health, 100 - health],
+            backgroundColor: ['#4ade80', '#1e293b'],
+            borderWidth: 0
+          }]
+        },
+        options: {
+          rotation: -90,
+          circumference: 180,
+          cutout: '75%',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } }
         }
       });
     }
 
-    loadDashboard();
+    function renderTable(equipFaults, totalReports) {
+      const tbody = document.getElementById('equipTableBody');
+      tbody.innerHTML = '';
+
+      Object.keys(equipFaults).forEach(cat => {
+        const faults = equipFaults[cat];
+        let tag = '<span class="tag tag-good">HEALTHY</span>';
+        if (faults > 2) tag = '<span class="tag tag-critical">CRITICAL</span>';
+        else if (faults > 0) tag = '<span class="tag tag-warning">WARNING</span>';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight: 600; color: var(--text-main);">${cat}</td>
+          <td>${totalReports}</td>
+          <td style="color: ${faults > 0 ? 'var(--accent-red)' : 'var(--text-sub)'}">${faults}</td>
+          <td>${tag}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderBottlenecks(sortedFaults) {
+      const container = document.getElementById('bottleneckList');
+      container.innerHTML = '';
+
+      const top3 = sortedFaults.slice(0, 3);
+      top3.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'bottleneck-item';
+        div.innerHTML = `
+          <div class="bottleneck-rank">${index + 1}</div>
+          <div class="bottleneck-info">
+            <div class="bottleneck-title">${item[0]}</div>
+            <div class="bottleneck-sub">${item[1]} reported issue(s) impact overall stability</div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function renderAlerts(alerts) {
+      const container = document.getElementById('alertsFeed');
+      container.innerHTML = '';
+
+      if (alerts.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 20px;">No recent critical alerts reported.</div>';
+        return;
+      }
+
+      alerts.slice(0, 5).forEach(a => {
+        const div = document.createElement('div');
+        div.className = 'alert-card';
+        div.innerHTML = `
+          <i class="fa-solid fa-triangle-exclamation alert-icon"></i>
+          <div class="alert-content">
+            <div class="alert-text"><strong>${a.campus}:</strong> ${a.text}</div>
+            <div class="alert-time">${a.time}</div>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Event Listeners & Auto Refresh Timer
+    document.getElementById('campusFilter').addEventListener('change', processAndRender);
+    document.getElementById('searchInput').addEventListener('input', processAndRender);
+
+    window.onload = function() {
+      fetchData();
+      setInterval(fetchData, 60000); // Refresh every 60s
+    };
   </script>
 </body>
 </html>
