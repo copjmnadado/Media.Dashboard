@@ -213,7 +213,7 @@
       align-items: center;
       margin-bottom: 14px;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 12px;
     }
 
     .panel-title {
@@ -233,16 +233,55 @@
       height: 220px;
     }
 
+    /* FILTERS TOOLBAR */
+    .filter-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--panel-border);
+    }
+
+    .filter-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .filter-select, .filter-date {
+      background: var(--bg-dark);
+      color: var(--text-main);
+      border: 1px solid var(--panel-border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      outline: none;
+    }
+
+    .filter-select:focus, .filter-date:focus {
+      border-color: var(--accent-cyan);
+    }
+
     .filter-bar {
       display: flex;
-      gap: 6px;
+      gap: 4px;
     }
 
     .filter-btn {
       background: transparent;
       border: 1px solid var(--panel-border);
       color: var(--text-muted);
-      padding: 5px 12px;
+      padding: 5px 10px;
       border-radius: 4px;
       font-size: 10px;
       font-weight: 600;
@@ -259,6 +298,23 @@
       border-color: var(--accent-cyan);
       color: var(--accent-cyan);
       background: rgba(6, 182, 212, 0.1);
+    }
+
+    .btn-reset-filter {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--accent-red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-reset-filter:hover {
+      background: var(--accent-red);
+      color: #fff;
     }
 
     table {
@@ -387,14 +443,14 @@
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="label">
-          <span>Total Submissions</span>
+          <span>Total Reported Issues</span>
           <i class="fa-solid fa-file-lines" style="color: var(--accent-cyan)"></i>
         </div>
         <div class="val-group">
           <div class="value" id="kpi-total">0</div>
-          <div class="unit">reports</div>
+          <div class="unit">issues</div>
         </div>
-        <div class="subtext"><i class="fa-solid fa-check-double"></i> Form Submissions</div>
+        <div class="subtext"><i class="fa-solid fa-check-double"></i> Total Tracked Issues</div>
       </div>
 
       <div class="kpi-card">
@@ -425,13 +481,13 @@
 
       <div class="kpi-card">
         <div class="label">
-          <span>Equipment Health Rate</span>
+          <span>Resolution Rate</span>
           <i class="fa-solid fa-heart-pulse" style="color: var(--accent-cyan)"></i>
         </div>
         <div class="val-group">
-          <div class="value" id="kpi-health" style="color: var(--accent-cyan)">100%</div>
+          <div class="value" id="kpi-health" style="color: var(--accent-cyan)">0%</div>
         </div>
-        <div class="subtext"><i class="fa-solid fa-gauge"></i> Operational Rate</div>
+        <div class="subtext"><i class="fa-solid fa-gauge"></i> Resolved vs Total Ratio</div>
       </div>
     </div>
 
@@ -462,7 +518,7 @@
       </div>
     </div>
 
-    <!-- INTERACTIVE ISSUE MANAGEMENT TABLE -->
+    <!-- INTERACTIVE ISSUE MANAGEMENT TABLE WITH ADVANCED FILTERS -->
     <div class="dashboard-grid">
       <div class="panel col-12">
         <div class="panel-header">
@@ -470,10 +526,43 @@
             <i class="fa-solid fa-list-check" style="color: var(--accent-lime)"></i>
             Active Equipment Issues & Resolution Tracker
           </div>
-          <div class="filter-bar">
-            <button class="filter-btn active" id="filter-all" onclick="setIssueFilter('ALL')">All</button>
-            <button class="filter-btn" id="filter-pending" onclick="setIssueFilter('PENDING')">Pending</button>
-            <button class="filter-btn" id="filter-resolved" onclick="setIssueFilter('RESOLVED')">Resolved</button>
+          
+          <!-- MULTI-FILTER TOOLBAR -->
+          <div class="filter-toolbar">
+            
+            <!-- Date Range Filter -->
+            <div class="filter-group">
+              <span class="filter-label"><i class="fa-regular fa-calendar"></i> Date:</span>
+              <input type="date" id="filter-start-date" class="filter-date" onchange="applyFilters()">
+              <span style="color: var(--text-muted)">to</span>
+              <input type="date" id="filter-end-date" class="filter-date" onchange="applyFilters()">
+            </div>
+
+            <!-- Campus Filter -->
+            <div class="filter-group">
+              <span class="filter-label"><i class="fa-solid fa-location-dot"></i> Campus:</span>
+              <select id="filter-campus" class="filter-select" onchange="applyFilters()">
+                <option value="ALL">All Campuses</option>
+              </select>
+            </div>
+
+            <!-- Equipment Type Filter -->
+            <div class="filter-group">
+              <span class="filter-label"><i class="fa-solid fa-tv"></i> Item:</span>
+              <select id="filter-equipment" class="filter-select" onchange="applyFilters()">
+                <option value="ALL">All Equipment</option>
+              </select>
+            </div>
+
+            <!-- Status Tabs -->
+            <div class="filter-bar">
+              <button class="filter-btn active" id="filter-all" onclick="setStatusFilter('ALL')">All</button>
+              <button class="filter-btn" id="filter-pending" onclick="setStatusFilter('PENDING')">Pending</button>
+              <button class="filter-btn" id="filter-resolved" onclick="setStatusFilter('RESOLVED')">Resolved</button>
+            </div>
+
+            <button class="btn-reset-filter" onclick="resetFilters()">Reset</button>
+
           </div>
         </div>
 
@@ -504,16 +593,16 @@
     Chart.defaults.color = '#64748b';
     Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-    // 1. Google Sheets Published CSV Link
+    // Google Sheets Published CSV Endpoint
     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAwSFIPM0NSulyIUxFBfmf_of8ZeqBjUa8SoIC9JuNYW24BVCx83QorbH3c70IzTLThmX_FmXkJVUP/pub?gid=417772&single=true&output=csv';
 
-    // 2. Google Apps Script Web App URL for Two-Way Resolve Updates
+    // Google Apps Script Web App Endpoint
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyM-AH2HtzkXiXyZuleiELn8xMC1HwprP3xpTB69ZgM22yMepOOMIcAOrTF2TF3zsyiRg/exec';
 
-    // Global state
+    // State Management
     let rawSheetData = [];
     let processedIssues = [];
-    let currentFilter = 'ALL';
+    let currentStatusFilter = 'ALL';
 
     let trendChartInstance = null;
     let equipmentChartInstance = null;
@@ -535,7 +624,6 @@
 
     function processData() {
       processedIssues = [];
-      let totalSubmissions = rawSheetData.length;
       let dateCounts = {};
       let equipmentCounts = {
         'Video Wall': 0,
@@ -547,30 +635,35 @@
         'LED Lights': 0
       };
 
+      const campusesSet = new Set();
+      const equipmentSet = new Set();
+
       rawSheetData.forEach((row, index) => {
         const reportedDate = row['Timestamp'] || row['Date'] || 'Unknown Date';
         const campus = row['What Campus?'] || 'General';
         const rowIndex = index + 2;
 
+        if (campus && campus !== 'General') campusesSet.add(campus);
+
         const checkAndAddIssue = (colValue, issueDetailCol, equipName, exactColHeader) => {
           if (colValue && typeof colValue === 'string') {
-            const val = colValue.toLowerCase();
-            if (!val.includes('working') && !val.includes('good') && !val.includes('no issue') && val.trim() !== '') {
+            const val = colValue.toLowerCase().trim();
+            
+            // Flexibly detect if row contains an issue OR a resolved marker
+            const isExplicitIssue = !val.includes('good') && !val.includes('no issue') && val !== '';
+            const isResolved = val.includes('resolved');
+
+            if (isResolved || (isExplicitIssue && !val.startsWith('working'))) {
               const issueDetail = row[issueDetailCol] || colValue;
-              
-              let isResolved = val.includes('resolved');
               let resolvedDate = '-';
               
               if (isResolved) {
                 const match = colValue.match(/Resolved:\s*([\d-]+\s*[\d:]*)/i);
-                if (match && match[1]) {
-                  resolvedDate = match[1];
-                } else {
-                  resolvedDate = 'Resolved';
-                }
+                resolvedDate = (match && match[1]) ? match[1] : 'Resolved';
               }
 
               equipmentCounts[equipName] = (equipmentCounts[equipName] || 0) + 1;
+              equipmentSet.add(equipName);
 
               processedIssues.push({
                 rowIndex: rowIndex,
@@ -598,16 +691,23 @@
         dateCounts[dayKey] = (dateCounts[dayKey] || 0) + 1;
       });
 
+      // Populate Dropdowns dynamically
+      populateDropdown('filter-campus', Array.from(campusesSet), 'All Campuses');
+      populateDropdown('filter-equipment', Array.from(equipmentSet), 'All Equipment');
+
+      // KPI Calculations
+      const totalIssues = processedIssues.length;
       const pendingCount = processedIssues.filter(i => !i.isResolved).length;
       const resolvedCount = processedIssues.filter(i => i.isResolved).length;
-      const healthRate = totalSubmissions > 0 
-        ? (((totalSubmissions - pendingCount) / totalSubmissions) * 100).toFixed(1) 
+      
+      const resolutionRate = totalIssues > 0 
+        ? ((resolvedCount / totalIssues) * 100).toFixed(1) 
         : 100;
 
-      document.getElementById('kpi-total').innerText = totalSubmissions;
+      document.getElementById('kpi-total').innerText = totalIssues;
       document.getElementById('kpi-pending').innerText = pendingCount;
       document.getElementById('kpi-resolved').innerText = resolvedCount;
-      document.getElementById('kpi-health').innerText = `${healthRate}%`;
+      document.getElementById('kpi-health').innerText = `${resolutionRate}%`;
 
       const subtextEl = document.getElementById('kpi-pending-sub');
       if (pendingCount > 0) {
@@ -618,24 +718,84 @@
         subtextEl.className = 'subtext';
       }
 
-      renderTable();
+      applyFilters();
       renderCharts(Object.keys(dateCounts), Object.values(dateCounts), Object.keys(equipmentCounts), Object.values(equipmentCounts));
     }
 
-    function renderTable() {
+    function populateDropdown(elementId, items, defaultText) {
+      const select = document.getElementById(elementId);
+      const currentValue = select.value;
+      select.innerHTML = `<option value="ALL">${defaultText}</option>`;
+      items.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item;
+        option.innerText = item;
+        select.appendChild(option);
+      });
+      if (items.includes(currentValue)) select.value = currentValue;
+    }
+
+    function setStatusFilter(status) {
+      currentStatusFilter = status;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`filter-${status.toLowerCase()}`).classList.add('active');
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const selectedCampus = document.getElementById('filter-campus').value;
+      const selectedEquipment = document.getElementById('filter-equipment').value;
+      const startDateVal = document.getElementById('filter-start-date').value;
+      const endDateVal = document.getElementById('filter-end-date').value;
+
+      const startDate = startDateVal ? new Date(startDateVal) : null;
+      const endDate = endDateVal ? new Date(endDateVal) : null;
+      if (endDate) endDate.setHours(23, 59, 59, 999);
+
+      let filtered = processedIssues.filter(issue => {
+        // Status filter
+        if (currentStatusFilter === 'PENDING' && issue.isResolved) return false;
+        if (currentStatusFilter === 'RESOLVED' && !issue.isResolved) return false;
+
+        // Campus filter
+        if (selectedCampus !== 'ALL' && issue.campus !== selectedCampus) return false;
+
+        // Equipment filter
+        if (selectedEquipment !== 'ALL' && issue.equipment !== selectedEquipment) return false;
+
+        // Date range filter
+        if (startDate || endDate) {
+          const issueDate = new Date(issue.reportedDate);
+          if (!isNaN(issueDate)) {
+            if (startDate && issueDate < startDate) return false;
+            if (endDate && issueDate > endDate) return false;
+          }
+        }
+
+        return true;
+      });
+
+      renderTable(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-campus').value = 'ALL';
+      document.getElementById('filter-equipment').value = 'ALL';
+      document.getElementById('filter-start-date').value = '';
+      document.getElementById('filter-end-date').value = '';
+      setStatusFilter('ALL');
+    }
+
+    function renderTable(dataToRender) {
       const tbody = document.getElementById('issue-table-body');
       tbody.innerHTML = '';
 
-      let filtered = processedIssues;
-      if (currentFilter === 'PENDING') filtered = processedIssues.filter(i => !i.isResolved);
-      if (currentFilter === 'RESOLVED') filtered = processedIssues.filter(i => i.isResolved);
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">No issues found matching current filter.</td></tr>`;
+      if (dataToRender.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">No issues found matching current filters.</td></tr>`;
         return;
       }
 
-      filtered.forEach(issue => {
+      dataToRender.forEach(issue => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td><span class="date-badge">${issue.reportedDate}</span></td>
@@ -686,13 +846,6 @@
         alert('Action sent! It will take 1-2 minutes for Google Sheets to reflect the update.');
         setTimeout(fetchDashboardData, 2000);
       }
-    }
-
-    function setIssueFilter(filterType) {
-      currentFilter = filterType;
-      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`filter-${filterType.toLowerCase()}`).classList.add('active');
-      renderTable();
     }
 
     function renderCharts(dates, dateValues, equipLabels, equipValues) {
@@ -750,7 +903,7 @@
       });
     }
 
-    // Initial load & 2-minute polling (120,000 ms)
+    // Initial fetch & setup 2-minute auto-refresh
     fetchDashboardData();
     setInterval(fetchDashboardData, 120000);
   </script>
