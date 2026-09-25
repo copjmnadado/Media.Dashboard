@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MEDIA SERVICE MONITORING DASHBOARD</title>
   
-  <!-- FontAwesome Icons & Chart.js -->
+  <!-- FontAwesome Icons, Chart.js & PapaParse -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
     :root {
@@ -376,7 +377,7 @@
         <div class="status-tag">
           <div class="dot"></div> Live CSV Connection
         </div>
-        <button class="btn-refresh" onclick="refreshDashboardUI()">
+        <button class="btn-refresh" onclick="fetchDashboardData()">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh Data
         </button>
       </div>
@@ -390,7 +391,7 @@
           <i class="fa-solid fa-file-lines" style="color: var(--accent-cyan)"></i>
         </div>
         <div class="val-group">
-          <div class="value" id="kpi-total">2</div>
+          <div class="value" id="kpi-total">0</div>
           <div class="unit">reports</div>
         </div>
         <div class="subtext"><i class="fa-solid fa-check-double"></i> Form Submissions</div>
@@ -402,7 +403,7 @@
           <i class="fa-solid fa-triangle-exclamation" style="color: var(--accent-red)"></i>
         </div>
         <div class="val-group">
-          <div class="value" id="kpi-pending" style="color: var(--accent-red)">1</div>
+          <div class="value" id="kpi-pending" style="color: var(--accent-red)">0</div>
           <div class="unit">unresolved</div>
         </div>
         <div class="subtext alert" id="kpi-pending-sub">
@@ -416,7 +417,7 @@
           <i class="fa-solid fa-circle-check" style="color: var(--accent-lime)"></i>
         </div>
         <div class="val-group">
-          <div class="value" id="kpi-resolved" style="color: var(--accent-lime)">1</div>
+          <div class="value" id="kpi-resolved" style="color: var(--accent-lime)">0</div>
           <div class="unit">fixed</div>
         </div>
         <div class="subtext"><i class="fa-solid fa-shield-halved"></i> Cleared by team</div>
@@ -428,7 +429,7 @@
           <i class="fa-solid fa-heart-pulse" style="color: var(--accent-cyan)"></i>
         </div>
         <div class="val-group">
-          <div class="value" id="kpi-health" style="color: var(--accent-cyan)">50.0%</div>
+          <div class="value" id="kpi-health" style="color: var(--accent-cyan)">100%</div>
         </div>
         <div class="subtext"><i class="fa-solid fa-gauge"></i> Operational Rate</div>
       </div>
@@ -489,13 +490,13 @@
             </tr>
           </thead>
           <tbody id="issue-table-body">
-            <!-- Dynamic issue rows rendered via JavaScript -->
+            <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">Loading live form responses...</td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-    <footer>Data auto-refreshed directly from Google Sheets CSV • Auto-polling active</footer>
+    <footer>Data auto-refreshed directly from Google Sheets CSV • Auto-polling active (2 mins)</footer>
 
   </div>
 
@@ -503,41 +504,104 @@
     Chart.defaults.color = '#64748b';
     Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
 
-    // Mock initial state representing real dashboard data with 1 resolved & 1 pending item
-    let totalSubmissions = 2;
-    let currentFilter = 'ALL';
+    // 1. Google Sheets Published CSV Link
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAwSFIPM0NSulyIUxFBfmf_of8ZeqBjUa8SoIC9JuNYW24BVCx83QorbH3c70IzTLThmX_FmXkJVUP/pub?gid=417772&single=true&output=csv';
 
-    let issuesData = [
-      {
-        id: 1,
-        reportedDate: '9/25/2026 14:02:40',
-        resolvedDate: '-',
-        campus: 'Main Campus',
-        equipment: 'Monitor',
-        details: 'Defective',
-        isResolved: false
-      },
-      {
-        id: 2,
-        reportedDate: '9/25/2026 14:16:42',
-        resolvedDate: '9/25/2026 15:30:00',
-        campus: 'Main Campus',
-        equipment: 'LED Lights',
-        details: 'Defective',
-        isResolved: true
-      }
-    ];
+    // 2. Google Apps Script Web App URL for Two-Way Resolve Updates
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyM-AH2HtzkXiXyZuleiELn8xMC1HwprP3xpTB69ZgM22yMepOOMIcAOrTF2TF3zsyiRg/exec';
+
+    // Global state
+    let rawSheetData = [];
+    let processedIssues = [];
+    let currentFilter = 'ALL';
 
     let trendChartInstance = null;
     let equipmentChartInstance = null;
 
-    function updateMetrics() {
-      const pendingCount = issuesData.filter(i => !i.isResolved).length;
-      const resolvedCount = issuesData.filter(i => i.isResolved).length;
-      
-      // Calculate Equipment Health Rate
+    async function fetchDashboardData() {
+      Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          rawSheetData = results.data;
+          processData();
+        },
+        error: function(err) {
+          console.error("Error parsing Google Sheets CSV:", err);
+        }
+      });
+    }
+
+    function processData() {
+      processedIssues = [];
+      let totalSubmissions = rawSheetData.length;
+      let dateCounts = {};
+      let equipmentCounts = {
+        'Video Wall': 0,
+        'Camera': 0,
+        'Tricaster': 0,
+        'Monitor': 0,
+        'UPS': 0,
+        'Modem/Link': 0,
+        'LED Lights': 0
+      };
+
+      rawSheetData.forEach((row, index) => {
+        const reportedDate = row['Timestamp'] || row['Date'] || 'Unknown Date';
+        const campus = row['What Campus?'] || 'General';
+        const rowIndex = index + 2;
+
+        const checkAndAddIssue = (colValue, issueDetailCol, equipName, exactColHeader) => {
+          if (colValue && typeof colValue === 'string') {
+            const val = colValue.toLowerCase();
+            if (!val.includes('working') && !val.includes('good') && !val.includes('no issue') && val.trim() !== '') {
+              const issueDetail = row[issueDetailCol] || colValue;
+              
+              let isResolved = val.includes('resolved');
+              let resolvedDate = '-';
+              
+              if (isResolved) {
+                const match = colValue.match(/Resolved:\s*([\d-]+\s*[\d:]*)/i);
+                if (match && match[1]) {
+                  resolvedDate = match[1];
+                } else {
+                  resolvedDate = 'Resolved';
+                }
+              }
+
+              equipmentCounts[equipName] = (equipmentCounts[equipName] || 0) + 1;
+
+              processedIssues.push({
+                rowIndex: rowIndex,
+                columnHeader: exactColHeader,
+                reportedDate: reportedDate,
+                resolvedDate: resolvedDate,
+                campus: campus,
+                equipment: equipName,
+                details: issueDetail,
+                isResolved: isResolved
+              });
+            }
+          }
+        };
+
+        checkAndAddIssue(row['Video Wall / LED Wall / Projector'], 'Video Wall / Projector Issue', 'Video Wall', 'Video Wall / LED Wall / Projector');
+        checkAndAddIssue(row['Camera'], 'Camera Issue', 'Camera', 'Camera');
+        checkAndAddIssue(row['Tricaster / Video Switcher'], 'Tricaster / Video Switcher Issue', 'Tricaster', 'Tricaster / Video Switcher');
+        checkAndAddIssue(row['Monitor'], 'Monitor Issue', 'Monitor', 'Monitor');
+        checkAndAddIssue(row['UPS'], 'UPS Issue', 'UPS', 'UPS');
+        checkAndAddIssue(row['Link Status'], 'Link Issue', 'Modem/Link', 'Link Status');
+        checkAndAddIssue(row['LED Lights & DMX Controller'], 'LED Lights / DMX Controller Issue', 'LED Lights', 'LED Lights & DMX Controller');
+
+        const dayKey = reportedDate.split(' ')[0] || 'Date';
+        dateCounts[dayKey] = (dateCounts[dayKey] || 0) + 1;
+      });
+
+      const pendingCount = processedIssues.filter(i => !i.isResolved).length;
+      const resolvedCount = processedIssues.filter(i => i.isResolved).length;
       const healthRate = totalSubmissions > 0 
-        ? (((totalSubmissions - pendingCount) / totalSubmissions) * 100).toFixed(1)
+        ? (((totalSubmissions - pendingCount) / totalSubmissions) * 100).toFixed(1) 
         : 100;
 
       document.getElementById('kpi-total').innerText = totalSubmissions;
@@ -554,19 +618,20 @@
         subtextEl.className = 'subtext';
       }
 
-      renderEquipmentChart();
+      renderTable();
+      renderCharts(Object.keys(dateCounts), Object.values(dateCounts), Object.keys(equipmentCounts), Object.values(equipmentCounts));
     }
 
     function renderTable() {
       const tbody = document.getElementById('issue-table-body');
       tbody.innerHTML = '';
 
-      let filtered = issuesData;
-      if (currentFilter === 'PENDING') filtered = issuesData.filter(i => !i.isResolved);
-      if (currentFilter === 'RESOLVED') filtered = issuesData.filter(i => i.isResolved);
+      let filtered = processedIssues;
+      if (currentFilter === 'PENDING') filtered = processedIssues.filter(i => !i.isResolved);
+      if (currentFilter === 'RESOLVED') filtered = processedIssues.filter(i => i.isResolved);
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">No issues found under this filter.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 18px;">No issues found matching current filter.</td></tr>`;
         return;
       }
 
@@ -585,7 +650,7 @@
           </td>
           <td>
             <button class="btn-action-resolve" 
-                    onclick="toggleResolve(${issue.id})" 
+                    onclick="resolveIssueInSheet(${issue.rowIndex}, '${encodeURIComponent(issue.columnHeader)}', this)" 
                     ${issue.isResolved ? 'disabled' : ''}>
               ${issue.isResolved 
                 ? '<i class="fa-solid fa-check"></i> Cleared' 
@@ -597,18 +662,29 @@
       });
     }
 
-    function toggleResolve(id) {
-      const issue = issuesData.find(i => i.id === id);
-      if (issue && !issue.isResolved) {
-        issue.isResolved = true;
-        
-        // Format current timestamp
-        const now = new Date();
-        const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-        issue.resolvedDate = formattedDate;
+    async function resolveIssueInSheet(row, equipColEncoded, btnElement) {
+      btnElement.innerText = 'Saving...';
+      btnElement.disabled = true;
 
-        updateMetrics();
-        renderTable();
+      const equipCol = decodeURIComponent(equipColEncoded);
+      const url = `${APPS_SCRIPT_URL}?row=${row}&equipCol=${encodeURIComponent(equipCol)}`;
+
+      try {
+        const response = await fetch(url);
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+          btnElement.innerText = 'Cleared';
+          setTimeout(fetchDashboardData, 1000);
+        } else {
+          alert('Error resolving issue: ' + result.message);
+          btnElement.innerText = 'Mark Resolved';
+          btnElement.disabled = false;
+        }
+      } catch (err) {
+        console.error('Failed to contact Apps Script:', err);
+        alert('Action sent! It will take 1-2 minutes for Google Sheets to reflect the update.');
+        setTimeout(fetchDashboardData, 2000);
       }
     }
 
@@ -619,22 +695,16 @@
       renderTable();
     }
 
-    function refreshDashboardUI() {
-      renderTable();
-      updateMetrics();
-      renderTrendChart();
-    }
-
-    function renderTrendChart() {
+    function renderCharts(dates, dateValues, equipLabels, equipValues) {
       if (trendChartInstance) trendChartInstance.destroy();
-      const ctx = document.getElementById('trendChart').getContext('2d');
-      trendChartInstance = new Chart(ctx, {
+      const ctxTrend = document.getElementById('trendChart').getContext('2d');
+      trendChartInstance = new Chart(ctxTrend, {
         type: 'line',
         data: {
-          labels: ['9/25/2026'],
+          labels: dates,
           datasets: [{
             label: 'Submissions',
-            data: [2],
+            data: dateValues,
             borderColor: '#06b6d4',
             backgroundColor: 'rgba(6, 182, 212, 0.12)',
             fill: true,
@@ -650,40 +720,20 @@
           plugins: { legend: { display: false } },
           scales: {
             x: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } } },
-            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } }, beginAtZero: true, stepSize: 1 }
+            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } }, beginAtZero: true }
           }
         }
       });
-    }
 
-    function renderEquipmentChart() {
       if (equipmentChartInstance) equipmentChartInstance.destroy();
-
-      // Aggregate issues per equipment
-      const equipCounts = {
-        'Monitor': 0,
-        'LED Lights': 0,
-        'Camera': 0,
-        'Tricaster': 0,
-        'Video Wall': 0,
-        'UPS': 0,
-        'Modem/Link': 0
-      };
-
-      issuesData.forEach(item => {
-        if (equipCounts.hasOwnProperty(item.equipment)) {
-          equipCounts[item.equipment]++;
-        }
-      });
-
-      const ctx = document.getElementById('equipmentChart').getContext('2d');
-      equipmentChartInstance = new Chart(ctx, {
+      const ctxEquip = document.getElementById('equipmentChart').getContext('2d');
+      equipmentChartInstance = new Chart(ctxEquip, {
         type: 'bar',
         data: {
-          labels: Object.keys(equipCounts),
+          labels: equipLabels,
           datasets: [{
-            label: 'Issues',
-            data: Object.values(equipCounts),
+            label: 'Total Issues',
+            data: equipValues,
             backgroundColor: ['#8b5cf6', '#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#c084fc', '#60a5fa'],
             borderRadius: 4
           }]
@@ -694,21 +744,15 @@
           plugins: { legend: { display: false } },
           scales: {
             x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
-            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } }, beginAtZero: true, precision: 0 }
+            y: { grid: { color: '#1e293b' }, ticks: { color: '#64748b', font: { size: 11 } }, beginAtZero: true }
           }
         }
       });
     }
 
-    window.onload = function() {
-      renderTable();
-      updateMetrics();
-      renderTrendChart();
-    };
-
-    // Initial load & 60-second polling
+    // Initial load & 2-minute polling (120,000 ms)
     fetchDashboardData();
-    setInterval(fetchDashboardData, 60000);
+    setInterval(fetchDashboardData, 120000);
   </script>
 </body>
 </html>
