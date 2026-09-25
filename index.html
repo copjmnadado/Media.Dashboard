@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Media Performance & Equipment Dashboard</title>
+  <!-- Chart.js & PapaParse CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    :root {
+      --bg-color: #0f0c20;
+      --card-bg: #18152e;
+      --card-border: #292447;
+      --text-main: #f0f0f5;
+      --text-muted: #8e8aab;
+      --accent-pink: #e024b3;
+      --accent-purple: #9d4edd;
+      --accent-green: #00e6a8;
+      --accent-red: #ff4d6d;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding: 24px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    header h1 { font-size: 24px; font-weight: 700; background: linear-gradient(90deg, #fff, var(--accent-pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
+
+    .grid-kpi { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 18px; position: relative; }
+    .kpi-title { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
+    .kpi-value { font-size: 28px; font-weight: 700; }
+    .kpi-badge { position: absolute; top: 18px; right: 18px; font-size: 11px; padding: 4px 8px; border-radius: 20px; font-weight: 600; }
+    .badge-green { background: rgba(0, 230, 168, 0.15); color: var(--accent-green); }
+    .badge-red { background: rgba(255, 77, 109, 0.15); color: var(--accent-red); }
+
+    .grid-charts { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .grid-charts { grid-template-columns: 1fr; } }
+
+    .chart-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; }
+    .chart-card h3 { font-size: 16px; margin-bottom: 16px; color: var(--text-main); }
+    .chart-container { position: relative; height: 300px; width: 100%; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>Media Report Analytics</h1>
+      <p>Live Campus AV & Equipment Inspection Dashboard</p>
+    </div>
+  </header>
+
+  <!-- KPI Section -->
+  <div class="grid-kpi">
+    <div class="kpi-card">
+      <div class="kpi-title">Total Inspection Reports</div>
+      <div class="kpi-value" id="kpi-total">0</div>
+      <span class="kpi-badge badge-green">Live Data</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Active Equipment Issues</div>
+      <div class="kpi-value" id="kpi-issues" style="color: var(--accent-red)">0</div>
+      <span class="kpi-badge badge-red" id="kpi-issue-rate">0% Rate</span>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Reporting Campuses</div>
+      <div class="kpi-value" id="kpi-campuses">0</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-title">Equipment Operational Rate</div>
+      <div class="kpi-value" id="kpi-health" style="color: var(--accent-green)">100%</div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="grid-charts">
+    <div class="chart-card">
+      <h3>Reports & Issues Trend</h3>
+      <div class="chart-container">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card">
+      <h3>Issues by Equipment Type</h3>
+      <div class="chart-container">
+        <canvas id="equipmentChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. PASTE YOUR PUBLISHED GOOGLE SHEET CSV URL HERE
+    const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAwSFIPM0NSulyIUxFBfmf_of8ZeqBjUa8SoIC9JuNYW24BVCx83QorbH3c70IzTLThmX_FmXkJVUP/pub?gid=417772&single=true&output=csv';
+
+    async function loadDashboard() {
+      if (GOOGLE_SHEET_CSV_URL === 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRAwSFIPM0NSulyIUxFBfmf_of8ZeqBjUa8SoIC9JuNYW24BVCx83QorbH3c70IzTLThmX_FmXkJVUP/pub?gid=417772&single=true&output=csv') {
+        console.warn('Please insert your published Google Sheet CSV URL.');
+        return;
+      }
+
+      Papa.parse(GOOGLE_SHEET_CSV_URL, {
+        download: true,
+        header: true,
+        complete: function(results) {
+          processData(results.data);
+        }
+      });
+    }
+
+    function processData(data) {
+      // Filter out empty rows
+      const rows = data.filter(r => r['Timestamp'] || r['What Campus?']);
+      
+      const totalReports = rows.length;
+      let issueCount = 0;
+      const campuses = new Set();
+      const equipmentIssues = {
+        'Video Wall': 0,
+        'Camera': 0,
+        'Tricaster': 0,
+        'Monitor': 0,
+        'UPS': 0,
+        'Link/Modem': 0,
+        'LED Lights': 0
+      };
+
+      const dateMap = {};
+
+      rows.forEach(row => {
+        if (row['What Campus?']) campuses.add(row['What Campus?']);
+
+        // Check equipment issue flags
+        let rowHasIssue = false;
+        
+        const checkIssue = (val, key) => {
+          if (val && !val.toLowerCase().includes('working') && !val.toLowerCase().includes('good') && !val.toLowerCase().includes('no issue') && val.trim() !== '') {
+            equipmentIssues[key]++;
+            rowHasIssue = true;
+          }
+        };
+
+        checkIssue(row['Video Wall / LED Wall / Projector'], 'Video Wall');
+        checkIssue(row['Camera'], 'Camera');
+        checkIssue(row['Tricaster / Video Switcher'], 'Tricaster');
+        checkIssue(row['Monitor'], 'Monitor');
+        checkIssue(row['UPS'], 'UPS');
+        checkIssue(row['Link Status'], 'Link/Modem');
+        checkIssue(row['LED Lights & DMX Controller'], 'LED Lights');
+
+        if (rowHasIssue) issueCount++;
+
+        // Group by Date for Trend
+        const rawDate = row['Date'] || row['Timestamp'] ? row['Timestamp'].split(' ')[0] : 'Unknown';
+        if (!dateMap[rawDate]) dateMap[rawDate] = { reports: 0 };
+        dateMap[rawDate].reports++;
+      });
+
+      // Update KPIs
+      document.getElementById('kpi-total').innerText = totalReports;
+      document.getElementById('kpi-issues').innerText = issueCount;
+      document.getElementById('kpi-campuses').innerText = campuses.size;
+      
+      const healthRate = totalReports > 0 ? (((totalReports - issueCount) / totalReports) * 100).toFixed(1) : 100;
+      document.getElementById('kpi-health').innerText = `${healthRate}%`;
+      document.getElementById('kpi-issue-rate').innerText = `${(100 - healthRate).toFixed(0)}% Issues`;
+
+      renderTrendChart(Object.keys(dateMap), Object.values(dateMap).map(d => d.reports));
+      renderDoughnutChart(Object.keys(equipmentIssues), Object.values(equipmentIssues));
+    }
+
+    function renderTrendChart(labels, values) {
+      new Chart(document.getElementById('trendChart'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Inspection Submissions',
+            data: values,
+            borderColor: '#e024b3',
+            backgroundColor: 'rgba(224, 36, 179, 0.15)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#292447' }, ticks: { color: '#8e8aab' } },
+            y: { grid: { color: '#292447' }, ticks: { color: '#8e8aab' } }
+          }
+        }
+      });
+    }
+
+    function renderDoughnutChart(labels, values) {
+      new Chart(document.getElementById('equipmentChart'), {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: values,
+            backgroundColor: ['#e024b3', '#9d4edd', '#00e6a8', '#ff4d6d', '#3a86ff', '#ffbe0b', '#fb5607']
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { color: '#8e8aab' } } }
+        }
+      });
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>
